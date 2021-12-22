@@ -176,13 +176,12 @@ trait ExportOperation
                     $column['attribute'] = $column['attribute'] ?? (new $column['model'])->identifiableAttribute();
                     
                     $attributes = $this->crud->getRelatedEntriesAttributes($entry, $column['entity'], $column['attribute']);
-                    ray($attributes);
+
                     $return_value = "";
                     foreach ($attributes as $key => $value) {
                         $return_value .= $value;
                     }
                     return $return_value;
-                    break;
             }
         }
         return $entry->$entryProperty ?? "";
