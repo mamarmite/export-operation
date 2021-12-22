@@ -3,24 +3,46 @@
 Current version 0.0.1
 
 ## Installation
+Add the package into your structure. (no composer package yet)
+
 `php artisan vendor:publish --provider="Backpack\ExportAllOperation\ExportOperationServiceProvider"`
 
 ## Features
-- Export all to excel button added to the CRUD list view.
+- [X] Trait that add a button into you list view 
+- [X] Creates URI endpoint to export all the model entries into a file.
+  - [X] CSV (in plain php)
+  - [ ] CSV with a lib (same as excel to DRY things)
+  - [ ] Excel (Planned)
+  - [ ] PDF (Maybe soon)
+  - [ ] HTML (Maybe soon)
 
 
 ## Next features
 Nice or idea to develop
 
-- Export All to *choice* like datatable offers but without the max data limit of it.
+- [ ] Add new permission precisely for this operation
+- [ ] Choose which columns to show in the export
+  - [ ] use DataTable UX ?
+- [ ] (maybe) reorder the columns in the export
+  - [ ] Use the Backpack for laravel reordering feature ?
+- [ ] Choose what you export
+  - All rows (124.141 entries)
+  - Filtered rows (45.133 entries)
+  - Currently visible rows (25 rows) (this DT have it covered I think)
+  - Currently selected rows (5 rows) (this DT have it covered I think)
+- Add a download btn with the format choices
 
+## Explore other ways
+
+This package add Livewire into
 https://github.com/yajra/laravel-datatables-export
+
+## Origin story
+
+### The features Originally posted by tabacitu April 13, 2020
 
 https://github.com/Laravel-Backpack/CRUD/issues/3860
 
-
-
-Originally posted by tabacitu April 13, 2020
 Instead of using DataTable's magic to export rows, we should create an Export operation. That way:
 
     we could even customize how it's done, add different export formats, etc;
