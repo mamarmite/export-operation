@@ -17,7 +17,7 @@
     ],
     "require": {
         "../../vendor/backpack/crud": "^4.0.0|^4.1.0",
-        "phpoffice/phpspreadsheet": "^1.20.0"
+        "maatwebsite/excel": "^3.1.0"
     },
     "require-dev": {
         "../../vendor/phpunit/phpunit": "^8.0"

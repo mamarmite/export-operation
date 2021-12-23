@@ -2,10 +2,12 @@
 
 namespace Backpack\ExportOperation;
 
+use Backpack\ExportOperation\Exports\Csv;
+use Backpack\ExportOperation\Exports\Excel;
+use Backpack\ExportOperation\Exports\ExportInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-use phpDocumentor\Reflection\File;
 
 trait ExportOperation
 {
@@ -77,28 +79,31 @@ trait ExportOperation
         
         //  Setup the head of the file.
         //  @todo setup config to set the head as column property or label for now.
-        $columns_labeled = [];
+        $head = [];
         foreach ($columns as $column_id => $column_params) {
-            $columns_labeled[] = $column_params["name"];
+            $head[] = $column_params["name"];
         }
         
         //  Construct the filename for the file.
         //  @todo add configuration to build the file as the user need. Date or no Date, date format, parameter in the setup function ?
-        $fileName = \Carbon\Carbon::now()->setTimezone('America/Montreal')->format('Ymd-Hi-') .
+        $fileName = \Carbon\Carbon::now()->setTimezone(config('app.timezone'))->format('Ymd-Hi-') .
             Str::slug(config('backpack.base.project_name')) . '-' .
             Str::slug($this->crud->entity_name_plural) .
             "." .
             $this->getFileExtension($format_type);
         
         return response()->streamDownload(
-            $this->generateFile($entries, $columns_labeled, $columns),
-            $fileName
+            $this->generateFile($entries, $head, $columns),
+            $fileName,
+            $this->getFilesHeader($format_type)
         );
     }
     
     
     /**
      * Before implementing exporting library, this is the file construction function callable for stream
+     * This is not really nice, I didn't know how return a callable with params with a streams.
+     * This is WIP.
      * @param Collection $entries All the entries to be exported
      * @param array $head The first row head values
      * @param array $structure The columns name return by the Crud object
@@ -113,12 +118,10 @@ trait ExportOperation
             
             foreach ($entries as $entry) {
                 $row = [];
-                foreach ($columns as $column_id => $column_params)
-                {
+                foreach ($columns as $column_id => $column_params) {
                     $row[$column_id] = $this->translateColumnToString($column_params, $entry, $column_id);
                 }
                 fputcsv($file, $row);
-                break;
             }
             
             fclose($file);
@@ -130,19 +133,13 @@ trait ExportOperation
     /**
      * Construct the appropriate headers for the target file's type according to the system.
      * For now only csv is implemented.
-     * @param $fileName the file name
+     * @param string $fileName the file name
      * @param string $type the system type.
      * @return string[] the headers in an array of strings
      */
-    protected function getFilesHeader($fileName, $type = 'csv')
+    protected function getFilesHeader(string $fileName, $type = 'csv'): array
     {
-        return [
-            "Content-type" => "text/$type",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        ];
+        return $this->callMethodOnExport($type, 'getHeaders', $fileName) ?? [];
     }
     
     
@@ -153,7 +150,23 @@ trait ExportOperation
      */
     protected function getFileExtension($type = "csv"): string
     {
-        return $type;
+        return $this->callMethodOnExport($type, 'getFileExtension') ?? "";
+    }
+    
+    
+    /**
+     * Version 1 of lazy factory for file type export.
+     * @param string $exportClass
+     * @param string $method
+     * @return mixed|null
+     */
+    private function callMethodOnExport(string $exportClass, string $method, $params=null)
+    {
+        $class = __NAMESPACE__.'\\Exports\\'. Str::studly($exportClass);
+        if (class_exists($class)) {
+            return $class::$method($params);
+        }
+        return null;
     }
     
     
@@ -176,7 +189,7 @@ trait ExportOperation
                     $column['attribute'] = $column['attribute'] ?? (new $column['model'])->identifiableAttribute();
                     
                     $attributes = $this->crud->getRelatedEntriesAttributes($entry, $column['entity'], $column['attribute']);
-
+                    
                     $return_value = "";
                     foreach ($attributes as $key => $value) {
                         $return_value .= $value;

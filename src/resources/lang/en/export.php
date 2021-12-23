@@ -21,4 +21,5 @@ return [
     //  Types
     'in-type' => 'In format: ',
     'type-csv'  => 'CSV',
+    'type-excel'  => 'Excel',
 ];

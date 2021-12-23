@@ -37,6 +37,13 @@ Nice or idea to develop
 This package add Livewire into
 https://github.com/yajra/laravel-datatables-export
 
+
+## Exporting to excel and other format
+
+### Library I've checked :
+- [maatwebsite/excel](https://github.com/SpartnerNL/Laravel-Excel) library. It's awesome. But it seem overly featured to my currents needs.
+- [PHPOffice/phpspreadsheet](https://github.com/PHPOffice/phpspreadsheet/) It's a little bit too much for our needs, but it would give some shortcuts for making excel file a little bit sexyier.
+
 ## Origin story
 
 ### The features Originally posted by tabacitu April 13, 2020

@@ -3,9 +3,14 @@
         <i class="la la-download"></i> {{ trans('export-operation::export.export') }} {{ $crud->entity_name_plural }}
     </button>
     <div class="dropdown-menu" aria-labelledby="exportOperationTypeSelectorDropdown" style="width: 100%;">
-        <a class="dropdown-item d-block" href="{{ url($crud->route.'/export') }}" class="btn btn-primary">
-            <span>@lang('export-operation::export.in-type')</span><span class="la la-file-csv la-lg"></span><!--<span class="badge bg-primary rounded-pill">@lang('export-operation::export.type-csv')</span>-->
+        @foreach(config('backpack.crud.operations.export.fileType') as $type)
+            @php
+            $type = Str::lower($type);
+            @endphp
+        <a class="dropdown-item d-block" href="{{ url($crud->route.'/export/'.$type) }}" class="btn btn-primary">
+            <span>@lang('export-operation::export.in-type')</span><span class="la la-file-{{$type}} la-lg"></span>@lang('export-operation::export.type-'.$type)</span>
         </a>
+        @endforeach
     </div>
 </div>
 
