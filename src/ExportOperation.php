@@ -2,15 +2,18 @@
 
 namespace Backpack\ExportOperation;
 
-use Backpack\ExportOperation\Exports\Csv;
-use Backpack\ExportOperation\Exports\Excel;
-use Backpack\ExportOperation\Exports\ExportInterface;
+use Backpack\ExportOperation\Exports\CrudExport;
+use Backpack\ExportOperation\Exports\CsvCrudExport;
+use Backpack\ExportOperation\Exports\Drivers\Csv;
+use Backpack\ExportOperation\Exports\Drivers\Excel;
+use Backpack\ExportOperation\Exports\Contracts\ExportInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 trait ExportOperation
 {
+    
     protected $default_export_format = 'csv';
     
     /**
@@ -44,7 +47,7 @@ trait ExportOperation
         //$this->crud->allowAccess('export');
         
         $this->crud->operation('export', function () {
-            $this->crud->loadDefaultOperationSettingsFromConfig();
+            $this->crud->loadDefaultOperationSettingsFromConfig('backpack.export');
         });
         
         $this->crud->operation(['list', 'show'], function () {
@@ -56,14 +59,33 @@ trait ExportOperation
     
     //  Routes methods
     
+    protected function export($type=null)
+    {
+        $format_type = $type ?? $this->default_export_format;
+        
+        //  Construct the filename for the file.
+        //  @todo add configuration to build the file as the user need. Date or no Date, date format, parameter in the setup function ?
+        $fileName = \Carbon\Carbon::now()->setTimezone(config('app.timezone'))->format('Ymd-Hi-') .
+            Str::slug(config('backpack.base.project_name')) . '-' .
+            Str::slug($this->crud->entity_name_plural) .
+            "." .
+            $this->getFileExtension($format_type);
+        
+        $export = new CrudExport($this->crud);
+        //Maatwebsite detect file type format and export accordingly.
+        return $export->download($fileName);//, \Maatwebsite\Excel\Excel::CSV
+    }
+    
     /**
      * Gets items from database and returns to selects.
      *
      * @param string|array $arg
      * @return \Symfony\Component\HttpFoundation\StreamedResponse the file streamed.
      */
-    protected function export($type = null)
+    protected function exportV1($type = null)
     {
+        //check if crud model is exportable (in the driver).
+        
         // allow access to the operation uri
         //$this->crud->allowAccess('export');
         
@@ -162,7 +184,7 @@ trait ExportOperation
      */
     private function callMethodOnExport(string $exportClass, string $method, $params=null)
     {
-        $class = __NAMESPACE__.'\\Exports\\'. Str::studly($exportClass);
+        $class = __NAMESPACE__.'\\Exports\\Drivers\\'. Str::studly($exportClass);
         if (class_exists($class)) {
             return $class::$method($params);
         }

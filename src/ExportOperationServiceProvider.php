@@ -37,6 +37,12 @@ class ExportOperationServiceProvider extends ServiceProvider
             $this->loadViewsFrom($customExportOperationFolder, 'export-operation');
         }
         $this->loadViewsFrom(__DIR__ . '/resources/views', 'export-operation');
+    
+        // use the vendor configuration file as fallback
+        $this->mergeConfigFrom(
+            __DIR__.'/config/backpack/export-operation.php',
+            'backpack.export-operation'
+        );
         
         // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
@@ -51,15 +57,19 @@ class ExportOperationServiceProvider extends ServiceProvider
      */
     protected function bootForConsole()
     {
-        /* Return errors. Passing that to tech depts. @todo.
-         * // Publishing the views.
+        // Publishing the views.
         $this->publishes([
             __DIR__.'/resources/views' => resource_path('views/vendor/backpack'),
-        ], 'export-all-operation.views');
+        ], 'export-operation.views');
         
         // Publishing the translation files.
         $this->publishes([
             __DIR__.'/resources/lang' => resource_path('lang/vendor/backpack'),
-        ], 'export-all-operation.lang');*/
+        ], 'export-operation.lang');
+        
+        // Publishing the config file
+        $this->publishes([
+            __DIR__.'/config/lang' => config_path('backpack/export-operation.php'),
+        ], 'export-operation.config');
     }
 }

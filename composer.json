@@ -11,9 +11,8 @@
     ],
     "homepage": "",
     "keywords": [
-        "Laravel", "ReviseOperation", "Backpack", "Backpack for Laravel", "Backpack Operation",
-        "Backpack Add-On", "Admin Panel", "Admin Interface", "Revision History", "Audit Log",
-        "Revisionable", "Revisions"
+        "Laravel", "ExportOperation", "Backpack", "Backpack for Laravel", "Backpack Operation",
+        "Backpack Add-On", "Admin Panel", "Admin Interface", "Excel", "CSV", "Large amount data"
     ],
     "require": {
         "../../vendor/backpack/crud": "^4.0.0|^4.1.0",
