@@ -5,10 +5,12 @@ namespace Backpack\ExportOperation\Exports;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-//, WithHeadings
+use Maatwebsite\Excel\Concerns\WithProperties;
 
-class CrudExport implements FromCollection, WithHeadings
+
+class CrudExport implements FromCollection, WithHeadings, WithProperties, WithCustomCsvSettings
 {
     use Exportable;
     
@@ -52,9 +54,11 @@ class CrudExport implements FromCollection, WithHeadings
      * @param $collection
      * @return \Illuminate\Support\Collection
      */
-    public function map_collection_to_cruds_columns_setup(Collection $collection): Collection {
+    public function map_collection_to_cruds_columns_setup(Collection $collection): Collection
+    {
         $rows = [];
-        if ($this->is_crud()) {
+        if ($this->is_crud())
+        {
             $columns = $this->crud->columns();
             foreach ($collection as $entry) {
                 $row = [];
@@ -76,7 +80,8 @@ class CrudExport implements FromCollection, WithHeadings
      */
     protected function translateColumnToString(array $column, $entry, $entryProperty): string
     {
-        if (isset($column['type'])) {
+        if (isset($column['type']))
+        {
             switch ($column['type']) {
                 case 'relationship':
                     
@@ -96,6 +101,37 @@ class CrudExport implements FromCollection, WithHeadings
             }
         }
         return $entry->$entryProperty ?? "";
+    }
+    
+    /**
+     * Maatwebsite/excel need for the implementes of `Maatwebsite\Excel\Concerns\WithProperties`
+     * @return array of the excel properties
+     */
+    public function properties(): array
+    {
+        return [
+            'creator'        => config("app.name"),
+            'lastModifiedBy' => config("app.name"),
+            'title'          => $this->crud->entity_name_plural,
+            'description'    => $this->crud->entity_name_plural,
+            'subject'        => $this->crud->entity_name_plural,
+            'keywords'       => $this->crud->entity_name_plural, 'export,spreadsheet',
+            'category'       => $this->crud->entity_name_plural,
+            'manager'        => config("app.name"),
+            'company'        => config("app.name"),
+        ];
+    }
+    
+    
+    /**
+     * extends the Config/Excel object for some new data.
+     * @return string[]
+     */
+    public function getCsvSettings(): array
+    {
+        return [
+            "output_encoding" => "UTF-8"
+        ];
     }
     
     

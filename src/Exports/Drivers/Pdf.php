@@ -2,10 +2,9 @@
 
 namespace Backpack\ExportOperation\Exports\Drivers;
 
-
 use Backpack\ExportOperation\Exports\Contracts\ExportInterface;
 
-class Excel implements ExportInterface
+class Pdf implements ExportInterface
 {
     
     public static function getHeaders(string $fileName): array
@@ -15,7 +14,7 @@ class Excel implements ExportInterface
     
     public static function getFileExtension(): string
     {
-        return "xls";
+        return "pdf";
     }
     
     public static function getLineEnding(): string

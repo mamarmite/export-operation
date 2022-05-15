@@ -22,4 +22,5 @@ return [
     'in-type' => 'In format: ',
     'type-csv'  => 'CSV',
     'type-excel'  => 'Excel',
+    'type-pdf'  => 'PDF',
 ];

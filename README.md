@@ -1,26 +1,35 @@
 # ExportAllOperation
 
-Current version 0.0.1
+Current version 0.0.2
+This version use [maatwebsite/excel](https://github.com/SpartnerNL/Laravel-Excel) for exports. 
+
 
 ## Installation
 Add the package into your structure. (no composer package yet)
 
 `php artisan vendor:publish --provider="Backpack\ExportAllOperation\ExportOperationServiceProvider"`
 
+## Todo
+- [ ] Export configuration publication
+- 
+
 ## Features
 - [X] Trait that add a button into you list view 
 - [X] Creates URI endpoint to export all the model entries into a file.
   - [X] CSV (in plain php)
-  - [ ] CSV with a lib (same as excel to DRY things)
-  - [ ] Excel (Planned)
-  - [ ] PDF (Maybe soon)
+  - [X] CSV with a lib (same as excel to DRY things)
+  - [X] Excel (XLS)
+  - [ ] Excel XLSX (Needed ?)
+  - [] PDF (Started)
   - [ ] HTML (Maybe soon)
+- [ ] Implements author configation.
 
 
 ## Next features
 Nice or idea to develop
 
 - [ ] Add new permission precisely for this operation
+- [ ] Add async call to avoid navigating outside of the current exportable view.
 - [ ] Choose which columns to show in the export
   - [ ] use DataTable UX ?
 - [ ] (maybe) reorder the columns in the export
@@ -31,18 +40,6 @@ Nice or idea to develop
   - Currently visible rows (25 rows) (this DT have it covered I think)
   - Currently selected rows (5 rows) (this DT have it covered I think)
 - Add a download btn with the format choices
-
-## Explore other ways
-
-This package add Livewire into
-https://github.com/yajra/laravel-datatables-export
-
-
-## Exporting to excel and other format
-
-### Library I've checked :
-- [maatwebsite/excel](https://github.com/SpartnerNL/Laravel-Excel) library. It's awesome. But it seem overly featured to my currents needs.
-- [PHPOffice/phpspreadsheet](https://github.com/PHPOffice/phpspreadsheet/) It's a little bit too much for our needs, but it would give some shortcuts for making excel file a little bit sexyier.
 
 ## Origin story
 

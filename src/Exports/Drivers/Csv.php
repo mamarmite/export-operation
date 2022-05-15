@@ -6,7 +6,13 @@ use Backpack\ExportOperation\Exports\Contracts\ExportInterface;
 
 class Csv implements ExportInterface
 {
-
+    
+    /**
+     * @deprecated
+     * Used in raw (no package) feature.
+     * @param string $fileName
+     * @return string[]
+     */
     public static function getHeaders(string $fileName): array
     {
         return [

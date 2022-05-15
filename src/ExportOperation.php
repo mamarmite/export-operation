@@ -3,11 +3,6 @@
 namespace Backpack\ExportOperation;
 
 use Backpack\ExportOperation\Exports\CrudExport;
-use Backpack\ExportOperation\Exports\CsvCrudExport;
-use Backpack\ExportOperation\Exports\Drivers\Csv;
-use Backpack\ExportOperation\Exports\Drivers\Excel;
-use Backpack\ExportOperation\Exports\Contracts\ExportInterface;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -25,6 +20,11 @@ trait ExportOperation
      */
     protected function setupExportOperationRoutes($segment, $routeName, $controller)
     {
+        // allow access to the operation
+        if ($this->is_permissionmanager_installed()) {
+            $this->crud->allowAccess('export');
+        }
+        
         Route::get($segment . '/export', [
             'as' => $routeName . '.export',
             'uses' => $controller . '@export',
@@ -44,7 +44,9 @@ trait ExportOperation
     protected function setupExportDefaults()
     {
         // allow access to the operation
-        //$this->crud->allowAccess('export');
+        if ($this->is_permissionmanager_installed()) {
+            $this->crud->allowAccess('export');
+        }
         
         $this->crud->operation('export', function () {
             $this->crud->loadDefaultOperationSettingsFromConfig('backpack.export');
@@ -59,8 +61,19 @@ trait ExportOperation
     
     //  Routes methods
     
+    /**
+     * This is a route Method
+     * @param string $type the file type (csv, excel, pdf)
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
     protected function export($type=null)
     {
+        // allow access to the operation
+        if ($this->is_permissionmanager_installed())
+        {
+            $this->crud->allowAccess('export');
+        }
+        
         $format_type = $type ?? $this->default_export_format;
         
         //  Construct the filename for the file.
@@ -73,95 +86,7 @@ trait ExportOperation
         
         $export = new CrudExport($this->crud);
         //Maatwebsite detect file type format and export accordingly.
-        return $export->download($fileName);//, \Maatwebsite\Excel\Excel::CSV
-    }
-    
-    /**
-     * Gets items from database and returns to selects.
-     *
-     * @param string|array $arg
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse the file streamed.
-     */
-    protected function exportV1($type = null)
-    {
-        //check if crud model is exportable (in the driver).
-        
-        // allow access to the operation uri
-        //$this->crud->allowAccess('export');
-        
-        // the target entries. Here would be logic to manage the prefered sources of data.
-        $entries = $this->crud->getEntries();//$this->crud->model->get();
-        
-        // Args : type export ?
-        $format_type = $type ?? $this->default_export_format;
-        
-        //  Get the columns setup in the operation setup function.
-        //  idea add params to the column to be parsed and used for exporting.
-        $columns = $this->crud->columns();
-        
-        //  Setup the head of the file.
-        //  @todo setup config to set the head as column property or label for now.
-        $head = [];
-        foreach ($columns as $column_id => $column_params) {
-            $head[] = $column_params["name"];
-        }
-        
-        //  Construct the filename for the file.
-        //  @todo add configuration to build the file as the user need. Date or no Date, date format, parameter in the setup function ?
-        $fileName = \Carbon\Carbon::now()->setTimezone(config('app.timezone'))->format('Ymd-Hi-') .
-            Str::slug(config('backpack.base.project_name')) . '-' .
-            Str::slug($this->crud->entity_name_plural) .
-            "." .
-            $this->getFileExtension($format_type);
-        
-        return response()->streamDownload(
-            $this->generateFile($entries, $head, $columns),
-            $fileName,
-            $this->getFilesHeader($format_type)
-        );
-    }
-    
-    
-    /**
-     * Before implementing exporting library, this is the file construction function callable for stream
-     * This is not really nice, I didn't know how return a callable with params with a streams.
-     * This is WIP.
-     * @param Collection $entries All the entries to be exported
-     * @param array $head The first row head values
-     * @param array $structure The columns name return by the Crud object
-     * @param string $type the system type.
-     * @return callable The callable method with the file to be stream to the user.
-     */
-    protected function generateFile($entries, $head, $columns, $type = 'csv'): callable
-    {
-        $callback = function () use ($entries, $head, $columns, $type) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $head);
-            
-            foreach ($entries as $entry) {
-                $row = [];
-                foreach ($columns as $column_id => $column_params) {
-                    $row[$column_id] = $this->translateColumnToString($column_params, $entry, $column_id);
-                }
-                fputcsv($file, $row);
-            }
-            
-            fclose($file);
-        };
-        return $callback;
-    }
-    
-    
-    /**
-     * Construct the appropriate headers for the target file's type according to the system.
-     * For now only csv is implemented.
-     * @param string $fileName the file name
-     * @param string $type the system type.
-     * @return string[] the headers in an array of strings
-     */
-    protected function getFilesHeader(string $fileName, $type = 'csv'): array
-    {
-        return $this->callMethodOnExport($type, 'getHeaders', $fileName) ?? [];
+        return $export->download($fileName);
     }
     
     
@@ -172,7 +97,7 @@ trait ExportOperation
      */
     protected function getFileExtension($type = "csv"): string
     {
-        return $this->callMethodOnExport($type, 'getFileExtension') ?? "";
+        return $this->callMethodOnDriver($type, 'getFileExtension') ?? "";
     }
     
     
@@ -182,7 +107,7 @@ trait ExportOperation
      * @param string $method
      * @return mixed|null
      */
-    private function callMethodOnExport(string $exportClass, string $method, $params=null)
+    private function callMethodOnDriver(string $exportClass, string $method, $params=null)
     {
         $class = __NAMESPACE__.'\\Exports\\Drivers\\'. Str::studly($exportClass);
         if (class_exists($class)) {
@@ -191,34 +116,8 @@ trait ExportOperation
         return null;
     }
     
-    
-    /**
-     * Assume the target mehtod of the item if it's a relationship, it's name.
-     * @param $column_params array The parameters of the column.
-     * @param $entry_column  mixed the column value from the entries, could be multiple thing. mixed is php 8. So kept that only in comment.
-     * @return string the column value as string for all.
-     */
-    protected function translateColumnToString(array $column, $entry, $entryProperty): string
-    {
-        if (isset($column['type'])) {
-            switch ($column['type']) {
-                case 'relationship':
-                    
-                    $column['escaped'] = $column['escaped'] ?? true;
-                    $column['prefix'] = $column['prefix'] ?? '';
-                    $column['suffix'] = $column['suffix'] ?? '';
-                    $column['limit'] = $column['limit'] ?? 40;
-                    $column['attribute'] = $column['attribute'] ?? (new $column['model'])->identifiableAttribute();
-                    
-                    $attributes = $this->crud->getRelatedEntriesAttributes($entry, $column['entity'], $column['attribute']);
-                    
-                    $return_value = "";
-                    foreach ($attributes as $key => $value) {
-                        $return_value .= $value;
-                    }
-                    return $return_value;
-            }
-        }
-        return $entry->$entryProperty ?? "";
+    private function is_permissionmanager_installed():bool {
+        return false;
     }
+
 }

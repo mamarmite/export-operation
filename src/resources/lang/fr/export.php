@@ -15,10 +15,11 @@ return [
     */
     
     'export'  => 'Exporter',
-    'export-all'  => 'Tout exporter',
+    'export-all'  => 'Tout exporter les',
     
     //  Types
     'in-type' => 'Dans le format : ',
     'type-csv'  => 'CSV',
     'type-excel'  => 'Excel',
+    'type-pdf'  => 'PDF',
 ];
