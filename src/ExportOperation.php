@@ -3,12 +3,12 @@
 namespace Backpack\ExportOperation;
 
 use Backpack\ExportOperation\Exports\CrudExport;
+use Backpack\ExportOperation\Exports\PdfCrudExport;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 trait ExportOperation
 {
-    
     protected $default_export_format = 'csv';
     
     /**
@@ -24,6 +24,12 @@ trait ExportOperation
         if ($this->is_permissionmanager_installed()) {
             $this->crud->allowAccess('export');
         }
+    
+        Route::get($segment . '/export/viewAll', [
+            'as' => $routeName . '.exportView',
+            'uses' => $controller . '@viewAllEntries',
+            'operation' => 'export',
+        ]);
         
         Route::get($segment . '/export', [
             'as' => $routeName . '.export',
@@ -73,7 +79,6 @@ trait ExportOperation
         {
             $this->crud->allowAccess('export');
         }
-        
         $format_type = $type ?? $this->default_export_format;
         
         //  Construct the filename for the file.
@@ -84,9 +89,25 @@ trait ExportOperation
             "." .
             $this->getFileExtension($format_type);
         
-        $export = new CrudExport($this->crud);
-        //Maatwebsite detect file type format and export accordingly.
-        return $export->download($fileName);
+        
+        if ($format_type === 'excel' ||
+            $format_type === 'csv')
+        {
+            $export = new CrudExport($this->crud);
+            return $export->download($fileName);
+        }
+        
+        if ($format_type === 'pdf')
+        {
+            $export = new PdfCrudExport($this->crud);
+            return $export->download($fileName);
+        }
+    }
+    
+    public function viewAllEntries()
+    {
+        $export = new PdfCrudExport($this->crud);
+        return $export->view();
     }
     
     
@@ -116,6 +137,11 @@ trait ExportOperation
         return null;
     }
     
+    
+    /**
+     * Wall to prepare the implementation of permission manager.
+     * @return bool
+     */
     private function is_permissionmanager_installed():bool {
         return false;
     }

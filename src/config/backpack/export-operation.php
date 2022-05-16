@@ -9,7 +9,7 @@ return [
             'fileType' => [
                 'csv',
                 'excel',
-                'pdf'
+                //'pdf'
             ],
         ],
     ],
